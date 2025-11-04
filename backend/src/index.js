@@ -1,22 +1,14 @@
-// backend/index.js
 require('dotenv').config();
-console.log(process.env.MP_ACCESS_TOKEN)
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/db');
 
-// Inicializar app
 const app = express();
-
-// Middlewares
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_ORIGIN || "http://localhost:4200" }));
 app.use(express.json());
 
-// Rutas base
-app.get('/', (req, res) => {
-  res.send('API de ecommerce funcionando 🚀');
-});
-
+// Health
+app.get('/', (_req, res) => res.send('API de ecommerce funcionando 🚀'));
 
 // Rutas del proyecto
 const userRoutes = require('./routes/userRoutes');
@@ -33,9 +25,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orderProducts', orderProductRoutes);
-app.use('/api/checkout', checkoutRoutes);
+app.use('/api/checkout', checkoutRoutes); // Stripe acá
 
-// Conexión a la base de datos
+// DB
 sequelize.authenticate()
   .then(() => console.log('Conexión a la base de datos establecida'))
   .catch(err => console.error('Error de conexión:', err));
@@ -44,9 +36,6 @@ sequelize.sync()
   .then(() => console.log('Modelos sincronizados con la base de datos'))
   .catch(err => console.error('Error al sincronizar modelos:', err));
 
-
-// Servidor escuchando
+// Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

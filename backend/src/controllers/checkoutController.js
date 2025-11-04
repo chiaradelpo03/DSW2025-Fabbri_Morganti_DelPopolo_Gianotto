@@ -1,54 +1,53 @@
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-import dotenv from 'dotenv';
-dotenv.config();
+// src/controllers/checkoutController.js
+const Stripe = require("stripe");
+require("dotenv").config();
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN,
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20",
 });
 
-export const createCheckout = async (req, res) => {
-  try {
-    const { items, payer } = req.body;
+function mapLineItems(items = []) {
+  return items.map((it) => {
+    const name = String(it.title ?? it.name ?? "").trim();
+    const unit = Number(it.unit_price ?? it.price);
+    const qty  = Number(it.quantity ?? 1);
+    if (!name || !Number.isFinite(unit) || unit <= 0 || !Number.isFinite(qty) || qty <= 0) {
+      throw new Error("Item inválido");
+    }
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: { name },
+        unit_amount: Math.round(unit * 100),
+      },
+      quantity: Math.trunc(qty),
+    };
+  });
+}
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Debe enviar items válidos' });
+async function createStripeCheckout(req, res) {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Items inválidos" });
     }
 
-    const formattedItems = items.map(item => ({
-      title: item.name,
-      unit_price: Number(item.price),
-      quantity: Number(item.quantity),
-      currency_id: 'ARS',
-    }));
+    const line_items = mapLineItems(items);
+    const FRONT = process.env.FRONTEND_ORIGIN || "http://localhost:4200";
 
-    const preference = new Preference(client);
-
-    const result = await preference.create({
-      body: {
-        items: formattedItems,
-        payer: {
-          email: payer?.email, 
-          name: payer?.name,
-          surname: payer?.surname,
-        },
-        back_urls: {
-          success: 'http://localhost:4200/success',
-          failure: 'http://localhost:4200/failure',
-          pending: 'http://localhost:4200/pending',
-        },
-        //auto_return: 'approved', // descomentado para que auto-retorne al aprobar pago
-        // opción extra para sandbox (no obligatorio)
-        notification_url: 'http://localhost:3000/api/notifications', 
-      },
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items,
+      success_url: `${FRONT}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${FRONT}/failure`,
+      metadata: { source: "my-shop" },
     });
 
-    // usar sandbox_init_point para pruebas sandbox
-    const paymentUrl = result.sandbox_init_point || result.init_point;
-
-    res.status(200).json({ init_point: paymentUrl });
-
-  } catch (error) {
-    console.error('Error al crear preferencia:', error.response?.data || error.message || error);
-    res.status(500).json({ error: 'No se pudo crear la preferencia' });
+    return res.status(200).json({ url: session.url });
+  } catch (err) {
+    console.error("❌ Stripe error:", err.message || err);
+    return res.status(500).json({ error: "No se pudo crear el checkout" });
   }
-};
+}
+
+module.exports = { createStripeCheckout };
