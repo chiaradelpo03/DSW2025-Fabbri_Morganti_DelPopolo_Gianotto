@@ -49,6 +49,16 @@ const deleteReview = async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar reseña' });
   }
 };
+const getByProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const reviews = await Review.findAll({ where: { productId } });
+    res.json(reviews);
+  } catch (error) {
+    console.error('Error al obtener reviews:', error);
+    res.status(500).json({ error: 'No se pudieron obtener las reseñas' });
+  }
+};
 
 module.exports = {
   getAllReviews,
@@ -56,4 +66,5 @@ module.exports = {
   createReview,
   updateReview,
   deleteReview,
+  getByProduct,
 };

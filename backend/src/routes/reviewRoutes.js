@@ -13,5 +13,7 @@ router.delete('/:id', authenticate, reviewController.deleteReview);
 router.get('/:id', reviewController.getReviewById);
 router.put('/:id', reviewController.updateReview);
 
+// Obtener todas las reseñas de un producto (pública)
+router.get('/product/:productId', reviewController.getByProduct);
 
 module.exports = router;
