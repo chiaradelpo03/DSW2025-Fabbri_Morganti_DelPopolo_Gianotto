@@ -1,7 +1,9 @@
-const express = require('express');
+// src/routes/checkout.js
+const express = require("express");
 const router = express.Router();
+const { createStripeCheckout } = require("../controllers/checkoutController");
 
-const { createCheckout } = require('../controllers/checkoutController');
+// Endpoint para crear una sesión de pago con Stripe
+router.post("/", createStripeCheckout);
 
-router.post('/', createCheckout);  
 module.exports = router;

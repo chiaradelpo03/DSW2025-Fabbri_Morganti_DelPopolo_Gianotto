@@ -25,7 +25,7 @@ const getReviewsByProduct = async (req, res) => {
 
     const reviews = await Review.findAll({
       where: { productId },
-      include: ['User'], // Si tu modelo Review tiene asociación con User
+      include: ['User'], 
     });
 
     res.json(reviews);
