@@ -12,13 +12,12 @@ exports.createStripeCheckout = async (req, res) => {
       return res.status(400).json({ error: "Debes enviar items válidos" });
     }
 
-    // ✅ CREA SESIÓN EN PESOS ARGENTINOS (ARS)
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"], // ⬅️ fuerza pago con tarjeta
+      payment_method_types: ["card"], 
       line_items: items.map((it) => ({
         price_data: {
-          currency: "ars", // ⬅️ PESOS ARGENTINOS
+          currency: "usd", // 
           product_data: { name: it.title || "Producto" },
           unit_amount: Math.round(Number(it.unit_price) * 100), // Stripe usa centavos
         },
