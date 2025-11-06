@@ -1,9 +1,18 @@
-// src/routes/checkout.js
 const express = require("express");
 const router = express.Router();
-const { createStripeCheckout } = require("../controllers/checkoutController");
+const {
+  createStripeCheckout,
+  confirmStripeCheckout,
+} = require("../controllers/checkoutController");
 
-// Endpoint para crear una sesión de pago con Stripe
-router.post("/", createStripeCheckout);
+// Si usás JWT, descomentá e insertá el middleware:
+const authenticate = require("../middlewares/authMiddleware");
+
+// Crear sesión de pago (Stripe)
+router.post("/", /*authenticate,*/ createStripeCheckout);
+
+// Confirmar pago y crear la orden en BD
+router.post("/confirm", /*authenticate,*/ confirmStripeCheckout);
 
 module.exports = router;
+
